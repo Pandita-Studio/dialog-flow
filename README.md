@@ -54,9 +54,10 @@ env['tools'] = 'mingw'
 ```bash
 # 1. Clone the repo
 git clone https://github.com/Pandita-Studio/dialog-flow.git
+cd dialog-flow
 
 # Run scons
-cd dialog-flow && scons platform=windows
+scons platform=windows
 ```
 
 This will compile shared libs under `build/bin` and tests binaries under `build-tests/bin`.
