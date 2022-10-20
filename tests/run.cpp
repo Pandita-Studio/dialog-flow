@@ -8,7 +8,7 @@ using namespace std;
 
 int main()
 {
-    ScriptLoader script_loader("TestDialog.diaf");
+    ScriptLoader script_loader("TestDialog.df");
 
     if (!script_loader.errors->empty())
         script_loader.errors->debug_trace_back();
@@ -23,6 +23,5 @@ int main()
     tokenizer.tokenize();
     tokenizer.debug_parsed_tokens();
 
-    system("pause");
     return 0;
 }

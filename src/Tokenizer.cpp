@@ -6,14 +6,25 @@ using namespace std;
 static const char *token_names[] = {
     "T_EMPTY",
     "T_NEWLINE",
-    "T_IDENTIFIER",
-    "T_STRING",
+    "T_EQUAL",
+    "T_POINT",
+    "T_DOUBLE_POINT",
+    "T_COMMA",
+    "T_OPEN_PARENTHESIS",
+    "T_CLOSE_PARENTHESIS",
+    "T_OPEN_BRACKET",
+    "T_CLOSE_BRACKET",
+    "T_OPEN_KEY",
+    "T_CLOSE_KEY",
+    "T_DOLLAR",
     "T_INTEGER",
+    "T_FLOAT",
+    "T_STRING",
+    "T_IDENTIFIER",
     "T_LABEL",
     "T_AT",
     "T_WITH",
     "T_DEFINE",
-    "T_DOUBLE_POINT",
     "T_EOF"
 };
 
@@ -119,9 +130,95 @@ void Tokenizer::tokenize() {
             _advance();
         }
 
+        else if (_peek(0) == '#') {
+            // consuming and ignoring comments
+
+            _advance();
+
+            while (_peek(0) != '\n') {
+                _advance();
+            }
+        }
+
+        else if (_peek(0) == '=') {
+            tokens.push_back(Token(Token::EQUAL, col, row));
+            _advance();
+        }
+
+        else if (_peek(0) == '.') {
+            tokens.push_back(Token(Token::POINT, col, row));
+            _advance();
+        }
+
         else if (_peek(0) == ':') {
             tokens.push_back(Token(Token::DOUBLE_POINT, col, row));
             _advance();
+        }
+
+        else if (_peek(0) == ',') {
+            tokens.push_back(Token(Token::DOUBLE_POINT, col, row));
+            _advance();
+        }
+
+        else if (_peek(0) == '(') {
+            tokens.push_back(Token(Token::OPEN_PARENTHESIS, col, row));
+            _advance();
+        }
+
+        else if (_peek(0) == ')') {
+            tokens.push_back(Token(Token::CLOSE_PARENTHESIS, col, row));
+            _advance();
+        }
+
+        else if (_peek(0) == '[') {
+            tokens.push_back(Token(Token::OPEN_BRACKET, col, row));
+            _advance();
+        }
+
+        else if (_peek(0) == ']') {
+            tokens.push_back(Token(Token::CLOSE_BRACKET, col, row));
+            _advance();
+        }
+
+        else if (_peek(0) == '{') {
+            tokens.push_back(Token(Token::OPEN_KEY, col, row));
+            _advance();
+        }
+
+        else if (_peek(0) == '}') {
+            tokens.push_back(Token(Token::CLOSE_KEY, col, row));
+            _advance();
+        }
+
+        else if (_peek(0) == '$') {
+            tokens.push_back(Token(Token::DOLLAR, col, row));
+            _advance();
+        }
+
+        else if (_is_valid_digit_char(_peek(0))) {
+            string literal;
+
+            while (_is_valid_digit_char(_peek(0))) {
+                literal += _peek(0);
+                _advance();
+            }
+
+            // Is a float number?
+            if (_peek(0) == '.' && _is_valid_digit_char(_peek(1))) {
+                literal += _peek(0); // consuming point
+                _advance();
+
+                while (_is_valid_digit_char(_peek(0))) {
+                    literal += _peek(0);
+                    _advance();
+                }
+
+                tokens.push_back(Token(Token::FLOAT, col, row, literal));
+            }
+
+            else {
+                tokens.push_back(Token(Token::INTEGER, col, row, literal));
+            }
         }
 
         else if (_peek(0) == '"') {
@@ -154,17 +251,6 @@ void Tokenizer::tokenize() {
             }
 
             tokens.push_back(_parse_keywords(Token(Token::IDENTIFIER, col, row, literal)));
-        }
-
-        else if (_is_valid_digit_char(_peek(0))) {
-            string literal;
-
-            while (_is_valid_digit_char(_peek(0))) {
-                literal += _peek(0);
-                _advance();
-            }
-
-            tokens.push_back(Token(Token::INTEGER, col, row, literal));
         }
 
         else {

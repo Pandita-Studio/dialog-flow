@@ -5,6 +5,9 @@
 # Prerequisites
 *.d
 
+# DialogFlow scripts
+*.df
+
 # Compiled Object files
 *.slo
 *.lo

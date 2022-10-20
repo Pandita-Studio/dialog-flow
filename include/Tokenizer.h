@@ -11,17 +11,29 @@ namespace df {
         struct Token {
             enum Type {
                 EMPTY,
+                // Simbols
                 NEWLINE,
+                EQUAL,
+                POINT,
+                DOUBLE_POINT,
+                COMMA,
+                OPEN_PARENTHESIS,
+                CLOSE_PARENTHESIS,
+                OPEN_BRACKET,
+                CLOSE_BRACKET,
+                OPEN_KEY,
+                CLOSE_KEY,
+                DOLLAR,
                 // Basic
-                IDENTIFIER,
-                STRING,
                 INTEGER,
+                FLOAT,
+                STRING,
+                IDENTIFIER,
                 // Keywords
                 LABEL,
                 AT,
                 WITH,
                 DEFINE,
-                DOUBLE_POINT,
                 TK_EOF,
                 TK_MAX
             };
