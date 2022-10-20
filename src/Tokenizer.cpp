@@ -113,9 +113,7 @@ void Tokenizer::tokenize() {
             _advance();
         }
 
-        else if (_peek(0) == '\n') {
-            row++;
-            
+        else if (_peek(0) == '\n') {            
             // skiping multiple newlines
             if (!tokens.empty()) {
                 if (tokens.at(tokens.size() - 1).type != Token::NEWLINE)
@@ -123,6 +121,7 @@ void Tokenizer::tokenize() {
             }
 
             _advance();
+            row++;
         }
 
         else if (_peek(0) == ' ') {

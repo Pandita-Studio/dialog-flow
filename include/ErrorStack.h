@@ -44,7 +44,7 @@ namespace df {
         inline const std::vector<Error> get_error_stack() const { return _stack; }
 
         void push_error(Error p_error);
-        void debug_trace_back();
+        const void debug_trace_back();
 
         ErrorStack(std::string p_stack_name);
         ~ErrorStack();

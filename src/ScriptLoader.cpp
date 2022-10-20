@@ -3,6 +3,11 @@
 using namespace df;
 using namespace std;
 
+ScriptLoader::ScriptLoader()
+{
+    errors = new ErrorStack("Script loader");
+}
+
 ScriptLoader::ScriptLoader(char p_file_path[]) {
     errors = new ErrorStack("Script loader");
 
@@ -29,9 +34,15 @@ ScriptLoader::ScriptLoader(char p_file_path[]) {
 
 ScriptLoader::~ScriptLoader() {
     if (errors->empty()) {
-        delete _source_code;
-        delete _source_file;
+        //delete _source_code;
+        //delete _source_file;
     }
 
     delete errors;
+}
+
+void ScriptLoader::set_source_code(char *p_source_code)
+{
+    _source_code = p_source_code;
+    _source_size = strlen(p_source_code);
 }
