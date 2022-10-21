@@ -3,13 +3,14 @@
 using namespace df;
 using namespace std;
 
-ScriptLoader::ScriptLoader()
+ScriptLoader::ScriptLoader()  : _source_file(nullptr), _source_code(nullptr)
 {
-    errors = new ErrorStack("Script loader");
+    errors = new ErrorStack("DialogFlow Script loader");
 }
 
-ScriptLoader::ScriptLoader(char p_file_path[]) {
-    errors = new ErrorStack("Script loader");
+ScriptLoader::ScriptLoader(char p_file_path[]) : _source_file(nullptr), _source_code(nullptr)
+{
+    errors = new ErrorStack("DialogFlow Script loader");
 
     _source_file = fopen(p_file_path, "rb");
 
@@ -33,16 +34,17 @@ ScriptLoader::ScriptLoader(char p_file_path[]) {
 }
 
 ScriptLoader::~ScriptLoader() {
-    if (errors->empty()) {
-        //delete _source_code;
-        //delete _source_file;
-    }
-
+    delete _source_code;
+    delete _source_file;
     delete errors;
 }
 
 void ScriptLoader::set_source_code(char *p_source_code)
 {
-    _source_code = p_source_code;
     _source_size = strlen(p_source_code);
+    _source_code = (char *)malloc(_source_size + 1);
+    
+    strcpy_s(_source_code, _source_size + 1, p_source_code);
+
+    _source_code[_source_size] = 0;
 }

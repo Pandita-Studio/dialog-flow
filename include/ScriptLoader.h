@@ -23,7 +23,7 @@ namespace df{
 
             ScriptLoader();
             ScriptLoader(char p_file_path[]);
-            ~ScriptLoader();
+            virtual ~ScriptLoader();
     };
 }
 

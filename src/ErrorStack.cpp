@@ -15,7 +15,7 @@ void ErrorStack::push_error(Error p_error) {
     _stack.push_back(p_error);
 }
 
-const void ErrorStack::debug_trace_back() {
+void ErrorStack::traceback() const {
     cout << _stack_name << " error trace back: " << endl;
 
     for (Error const &error : _stack)

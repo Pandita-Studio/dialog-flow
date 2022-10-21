@@ -3,64 +3,38 @@
 using namespace df;
 using namespace std;
 
-static const char *token_names[] = {
-    "T_EMPTY",
-    "T_NEWLINE",
-    "T_EQUAL",
-    "T_POINT",
-    "T_DOUBLE_POINT",
-    "T_COMMA",
-    "T_OPEN_PARENTHESIS",
-    "T_CLOSE_PARENTHESIS",
-    "T_OPEN_BRACKET",
-    "T_CLOSE_BRACKET",
-    "T_OPEN_KEY",
-    "T_CLOSE_KEY",
-    "T_DOLLAR",
-    "T_INTEGER",
-    "T_FLOAT",
-    "T_STRING",
-    "T_IDENTIFIER",
-    "T_LABEL",
-    "T_AT",
-    "T_WITH",
-    "T_DEFINE",
-    "T_EOF"
-};
-
 static_assert(sizeof(token_names) / sizeof(token_names[0]) == Tokenizer::Token::TK_MAX, "Amount of token names don't match the amount of token types.");
 
 Tokenizer::Tokenizer() {
-    done = false;
+    errors = new ErrorStack("DialogFlow Tokenizer");
     cursor = 0;
     row = 1;
     col = 1;
 }
 
 Tokenizer::~Tokenizer() {
-
+    delete errors;
 }
 
 void Tokenizer::_advance() {
     col++;
     cursor++;
-
-    if (cursor == script->get_source_size())
-        done = true;
 }
 
-char Tokenizer::_peek(int p_position) {
+const char Tokenizer::_peek(int p_position) const {
     if (p_position == -1 && cursor == 0)
-        return 2; // ascii START_OF_TEXT
+        return START_OF_TEXT;
     
-    else if (p_position == 1 && (cursor + 1) == script->get_source_size())
-        return 3; // ascii END_OF_TEXT
+    else if (
+            (p_position == 1 && (cursor + 1) == script->get_source_size())
+            || (p_position == 0 && cursor == script->get_source_size()))
+        return END_OF_TEXT;
     
     else
         return script->get_source_code()[cursor + p_position];
 }
 
-bool Tokenizer::_is_valid_digit_char(char symbol){
+const bool Tokenizer::_is_valid_digit_char(char symbol) const {
     uint32_t ascii = symbol;
 
     if (ascii >= 48 && ascii <= 57)
@@ -69,7 +43,7 @@ bool Tokenizer::_is_valid_digit_char(char symbol){
     return false;
 }
 
-bool Tokenizer::_is_valid_identifier_name_char(char symbol) {
+const bool Tokenizer::_is_valid_identifier_name_char(char symbol) const {
     uint32_t ascii = symbol;
 
     if (symbol == '_')
@@ -84,7 +58,7 @@ bool Tokenizer::_is_valid_identifier_name_char(char symbol) {
     return false; 
 }
 
-Tokenizer::Token Tokenizer::_parse_keywords(Token p_token) {
+const Tokenizer::Token Tokenizer::_parse_keywords(Token p_token) const {
     if (p_token.literal == "label")
         p_token.type = Token::LABEL;
     
@@ -107,10 +81,16 @@ void Tokenizer::set_script(ScriptLoader *p_script)
 }
 
 void Tokenizer::tokenize() {
-    while (!done) {
-        if (_peek(0) == '\r') {
-            col = 0;
+    while (true) {
+        if (_peek(0) == END_OF_TEXT) {
+            tokens.push_back(Token(Token::TK_EOF, col, row));
+            break;
+        }
+
+        else if (_peek(0) == '\r') {
+            // ignoring cret
             _advance();
+            col--;
         }
 
         else if (_peek(0) == '\n') {            
@@ -121,12 +101,29 @@ void Tokenizer::tokenize() {
             }
 
             _advance();
+            col = 0;
             row++;
         }
 
         else if (_peek(0) == ' ') {
-            // ignoring blank spaces
-            _advance();
+            if (_peek(-1) == '\n') {
+                // consuming space tabulations
+                uint32_t space_counter = 0;
+                Token token(Token::TAB, col, row);
+
+                while (_peek(0) == ' ')
+                {
+                    _advance();
+                    space_counter++;
+                }
+
+                token.literal = to_string(space_counter); // ToDo: Optimize this
+                tokens.push_back(token);
+            }
+
+            else {
+                _advance();
+            }
         }
 
         else if (_peek(0) == '#') {
@@ -134,8 +131,9 @@ void Tokenizer::tokenize() {
 
             _advance();
 
-            while (_peek(0) != '\n') {
+            while (_peek(0) != '\n' && _peek(0) != END_OF_TEXT) {
                 _advance();
+                col--;
             }
         }
 
@@ -196,6 +194,7 @@ void Tokenizer::tokenize() {
 
         else if (_is_valid_digit_char(_peek(0))) {
             string literal;
+            Token token(Token::INTEGER, col, row);
 
             while (_is_valid_digit_char(_peek(0))) {
                 literal += _peek(0);
@@ -212,11 +211,14 @@ void Tokenizer::tokenize() {
                     _advance();
                 }
 
-                tokens.push_back(Token(Token::FLOAT, col, row, literal));
+                token.type = Token::FLOAT;
+                token.literal = literal;
+                tokens.push_back(token);
             }
 
             else {
-                tokens.push_back(Token(Token::INTEGER, col, row, literal));
+                token.literal = literal;
+                tokens.push_back(token);
             }
         }
 
@@ -224,51 +226,64 @@ void Tokenizer::tokenize() {
             _advance();
 
             string literal;
+            Token token(Token::STRING, col, row);
 
-            while (_peek(0) != '"' && _peek(0) != '\n') {
+            while (_peek(0) != '"' && _peek(0) != '\n' && _peek(0) != END_OF_TEXT) {
                 literal += _peek(0);
                 _advance();
             }
 
             if (_peek(0) == '"') {
-                tokens.push_back(Token(Token::STRING, col, row, literal));
+                token.literal = literal;
+                tokens.push_back(token);
                 _advance();
             }
 
             else {
-                cout << "Unclosed string at line: " << row << endl;
-                done = true;
+                errors->push_error(ErrorStack::Error("Unclosed string", col, row));
+                break;
             }
         }
 
         else if (_is_valid_identifier_name_char(_peek(0))) {
             string literal;
+            Token token(Token::IDENTIFIER, col, row);
 
             while (_is_valid_identifier_name_char(_peek(0))) {
                 literal += _peek(0);
                 _advance();
             }
 
-            tokens.push_back(_parse_keywords(Token(Token::IDENTIFIER, col, row, literal)));
+            token.literal = literal;
+            tokens.push_back(_parse_keywords(token));
         }
 
         else {
-            cout << "Unexpected symbol: '" << _peek(0) << "'";
-            cout << " at line " << row << " col " << col << endl;
-
-            done = true;
+            errors->push_error(ErrorStack::Error("Unexpected symbol: '" + to_string(_peek(0)) + "'", col, row));
+            break;
         }
     }
+
+    cursor = 0;
 }
 
-void Tokenizer::debug_parsed_tokens() {
-    for (size_t i = 0; i < tokens.size(); i++)
-    {
-        Token token = tokens.at(i);
-
-        cout << token_names[token.type] << "(" << token.literal << ")";
-        cout << " at Line " << token.row << " Col " << token.col << endl;
+const Tokenizer::Token Tokenizer::scan(int p_position) const {
+    if (tokens.empty()) {
+        errors->push_error(ErrorStack::Error("Scaning from an empty tokens stack"));
+        return Token();
     }
 
-    cout << endl;
+    if (p_position == -1 && cursor == 0)
+        return Token(Token::TK_SOF);
+
+    else if (p_position == 1 && (cursor + 1) == tokens.size()
+            || p_position == 0 && cursor == tokens.size())
+        return Token(Token::TK_EOF);
+    
+    else
+        return tokens.at(cursor + p_position);
+}
+
+void Tokenizer::consume() {
+    cursor++;
 }
