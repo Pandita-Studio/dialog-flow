@@ -39,7 +39,7 @@ ScriptLoader::~ScriptLoader() {
     delete errors;
 }
 
-void ScriptLoader::set_source_code(char *p_source_code)
+void ScriptLoader::set_source_code(const char *p_source_code)
 {
     _source_size = strlen(p_source_code);
     _source_code = (char *)malloc(_source_size + 1);

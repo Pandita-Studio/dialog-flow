@@ -148,12 +148,12 @@ void Tokenizer::tokenize() {
         }
 
         else if (_peek(0) == ':') {
-            tokens.push_back(Token(Token::DOUBLE_POINT, col, row));
+            tokens.push_back(Token(Token::COLON, col, row));
             _advance();
         }
 
         else if (_peek(0) == ',') {
-            tokens.push_back(Token(Token::DOUBLE_POINT, col, row));
+            tokens.push_back(Token(Token::COMMA, col, row));
             _advance();
         }
 

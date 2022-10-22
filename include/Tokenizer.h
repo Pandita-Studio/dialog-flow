@@ -12,7 +12,7 @@ namespace df {
         "T_NEWLINE",
         "T_EQUAL",
         "T_POINT",
-        "T_DOUBLE_POINT",
+        "T_COLON",
         "T_COMMA",
         "T_OPEN_PARENTHESIS",
         "T_CLOSE_PARENTHESIS",
@@ -46,7 +46,7 @@ namespace df {
                 NEWLINE,
                 EQUAL,
                 POINT,
-                DOUBLE_POINT,
+                COLON,
                 COMMA,
                 OPEN_PARENTHESIS,
                 CLOSE_PARENTHESIS,
@@ -98,7 +98,7 @@ namespace df {
                 literal = "_";
             }
 
-            std::string to_string() {
+            const std::string to_string() const {
                 std::string token_string(token_names[type]);
 
                 token_string += "(" + literal + ")";
@@ -130,6 +130,7 @@ namespace df {
         
     public:
 
+        inline const uint32_t get_cursor_position() const { return cursor; }
         inline const std::vector<Token> get_tokens() const { return tokens; }
 
         void set_script(ScriptLoader *p_script);
